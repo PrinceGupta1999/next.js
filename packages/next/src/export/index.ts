@@ -510,6 +510,7 @@ export async function exportAppImpl(
       ppr: nextConfig.experimental.ppr === true,
       missingSuspenseWithCSRBailout:
         nextConfig.experimental.missingSuspenseWithCSRBailout === true,
+      inlineCss: nextConfig.experimental.inlineCss ?? false,
     },
   }
 

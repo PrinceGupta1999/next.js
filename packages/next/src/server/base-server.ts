@@ -258,7 +258,11 @@ type BaseRenderOpts = {
   appDirDevErrorLogger?: (err: any) => Promise<void>
   strictNextHead: boolean
   isExperimentalCompile?: boolean
-  experimental: { ppr: boolean; missingSuspenseWithCSRBailout: boolean }
+  experimental: {
+    ppr: boolean
+    missingSuspenseWithCSRBailout: boolean
+    inlineCss: boolean
+  }
 }
 
 export interface BaseRequestHandler {
@@ -551,6 +555,7 @@ export default abstract class Server<ServerOptions extends Options = Options> {
           this.nextConfig.experimental.ppr === true,
         missingSuspenseWithCSRBailout:
           this.nextConfig.experimental.missingSuspenseWithCSRBailout === true,
+        inlineCss: this.nextConfig.experimental.inlineCss ?? false,
       },
     }
 

@@ -24,6 +24,7 @@ import { formatBarrelOptimizedResource } from '../utils'
 interface Options {
   dev: boolean
   appDir: string
+  experimentalInlineCss: boolean
 }
 
 /**
@@ -63,6 +64,19 @@ export interface ManifestNode {
   }
 }
 
+export type CssResource = InlinedCssFile | UninlinedCssFile
+
+interface InlinedCssFile {
+  path: string
+  inlined: true
+  content: string
+}
+
+interface UninlinedCssFile {
+  path: string
+  inlined: false
+}
+
 export type ClientReferenceManifest = {
   moduleLoading: {
     prefix: string
@@ -76,7 +90,7 @@ export type ClientReferenceManifest = {
     [moduleId: string]: ManifestNode
   }
   entryCSSFiles: {
-    [entry: string]: string[]
+    [entry: string]: CssResource[]
   }
   entryJSFiles?: {
     [entry: string]: string[]
@@ -174,12 +188,14 @@ export class ClientReferenceManifestPlugin {
   appDir: Options['appDir']
   appDirBase: string
   ASYNC_CLIENT_MODULES: Set<string>
+  experimentalInlineCss: Options['experimentalInlineCss']
 
   constructor(options: Options) {
     this.dev = options.dev
     this.appDir = options.appDir
     this.appDirBase = path.dirname(this.appDir) + path.sep
     this.ASYNC_CLIENT_MODULES = new Set(pluginState.ASYNC_CLIENT_MODULES)
+    this.experimentalInlineCss = options.experimentalInlineCss
   }
 
   apply(compiler: webpack.Compiler) {
@@ -268,6 +284,26 @@ export class ClientReferenceManifestPlugin {
           .filter(
             (f) => !f.startsWith('static/css/pages/') && f.endsWith('.css')
           )
+          .map((file) => {
+            const source = compilation.assets[file].source()
+            if (
+              this.experimentalInlineCss &&
+              // Inline CSS currently does not work properly with HMR, so we only
+              // inline CSS in production.
+              !this.dev
+            ) {
+              return {
+                inlined: true,
+                path: file,
+                content:
+                  typeof source === 'string' ? source : source.toString(),
+              }
+            }
+            return {
+              inlined: false,
+              path: file,
+            }
+          })
 
         entryName = chunkGroup.name
       }
