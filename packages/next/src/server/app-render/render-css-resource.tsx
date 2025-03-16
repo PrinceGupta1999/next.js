@@ -2,7 +2,6 @@ import type { CssResource } from '../../build/webpack/plugins/flight-manifest-pl
 import { encodeURIPath } from '../../shared/lib/encode-uri-path'
 import type { AppRenderContext } from './app-render'
 import { getAssetQueryString } from './get-asset-query-string'
-import type { PreloadCallbacks } from './types'
 
 /**
  * Abstracts the rendering of CSS files based on whether they are inlined or not.
@@ -12,7 +11,7 @@ import type { PreloadCallbacks } from './types'
 export function renderCssResource(
   entryCssFiles: CssResource[],
   ctx: AppRenderContext,
-  preloadCallbacks?: PreloadCallbacks
+  preloadStyles?: boolean
 ) {
   return entryCssFiles.map((entryCssFile, index) => {
     // `Precedence` is an opt-in signal for React to handle resource
@@ -40,7 +39,6 @@ export function renderCssResource(
       return (
         <style
           key={index}
-          nonce={ctx.nonce}
           // @ts-ignore
           precedence={precedence}
           href={fullHref}
@@ -49,14 +47,9 @@ export function renderCssResource(
         </style>
       )
     }
-
-    preloadCallbacks?.push(() => {
-      ctx.componentMod.preloadStyle(
-        fullHref,
-        ctx.renderOpts.crossOrigin,
-        ctx.nonce
-      )
-    })
+    if (preloadStyles) {
+      ctx.componentMod.preloadStyle(fullHref, ctx.renderOpts.crossOrigin)
+    }
 
     return (
       <link
@@ -66,7 +59,6 @@ export function renderCssResource(
         // @ts-ignore
         precedence={precedence}
         crossOrigin={ctx.renderOpts.crossOrigin}
-        nonce={ctx.nonce}
       />
     )
   })
